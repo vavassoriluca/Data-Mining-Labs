@@ -13,6 +13,7 @@ class FrequentItems:
         self.transactions = 0        # total number of transactions
         self.candidates = None      # candidate itemsets
         self.singletons = []       # list of candidate singletons
+        self.temp_k = 2           # incremental k
 
 
 
@@ -47,19 +48,28 @@ class FrequentItems:
 
 
 
-    def createPowerSets(self):
+    def createPowerSets(self, candidates):
         # create a powerset of order k_itemset
-        num = len(self.candidates)
+        num = len(candidates)
         powerset = []
         for i in range(1, 1 << num):
-            list = [self.candidates[j] for j in range(num) if (i & (1 << j))]
-            if len(list) == self.k_itemset:
+            list = [candidates[j] for j in range(num) if (i & (1 << j))]
+            if len(list) == self.temp_k:
                 powerset.append(list)
         print(powerset)
         return powerset
 
 
+    def countKsupport(self, powerset, candidates):
+        for item in powerset:
+            for line in open(self.folder_path, 'r'):
+                items = line.split(" ")
+                self.createPowerSets(items)
+                
 
+
+
+'''
     def hasFrequentSubsets(self):
         # check if all subsets of the itemset are also frequent
         subsets = self.createPowerSets()
@@ -98,7 +108,7 @@ class FrequentItems:
                         C.append(",".join(list(c)))
         print(C)
         return C
-
+'''
 
 a = FrequentItems(folder_path=path, support=1, k_itemset=5)
 a.createCandidates()
