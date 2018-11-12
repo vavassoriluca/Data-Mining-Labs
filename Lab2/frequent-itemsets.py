@@ -6,23 +6,19 @@ path = "../../SharedData/T10I4D100K.dat"
 
 class FrequentItems:
 
-    def __init__(self, folder_path, support=1, k_itemset= 3):
-        self.folder_path = folder_path  # path to the transactions folder
-        self.support = float(support)  # minimum support in percentage
-        self.k_itemset = k_itemset    # size of the itemsets
-        self.transactions = 0        # total number of transactions
-        self.candidates = None      # candidate itemsets
-        self.singletons = []       # list of candidate singletons
-        self.temp_k = 2           # incremental k
-        self.pruned = []         # eliminated items
-        self.fatherArray = []   # saving variable for progress
+    def __init__(self, folder_path, support=1):
+       	
+       	self.folder_path = folder_path  # path to the transactions folder
+        self.support = float(support)  	# minimum support in percentage
+        self.transactions = 0        	# total number of transactions
+        self.candidates = None      	# candidate itemsets
+        self.singletons = []       		# list of candidate singletons
+        self.temp_k = 2          		# incremental k
 
 
-
+    # load dataset and count frequency of singletons
     def createCandidates(self):
-        # load dataset and count frequency of singletons
         self.candidates = defaultdict(int)
-        returnSet = []
         for line in open(self.folder_path, 'r'):
             items = line.split(" ")
             self.transactions += 1
@@ -30,85 +26,13 @@ class FrequentItems:
                 self.candidates[item] += 1
         print(self.candidates)
         print(self.transactions)
-        del self.candidates["\n"]
-        for key in self.candidates:
-            temp = []
-            temp.append(key)
-            returnSet.append(temp)
-            returnSet.append(self.candidates[key])
-            temp = []
         self.singletons = list(self.candidates.keys())
-        return returnSet
+        return self.candidates
 
 
-
-    def generateFrequentItems(self, candidateList):
-        # start generalizing to k steps using sets
-        frequents = []
-        print("trying new cycle!")
-        for i in range(len(candidateList)):
-            if i%2 != 0:
-                if candidateList[i] >= (self.transactions / float(100)) * self.support:
-                    frequents.append(candidateList[i-1])
-                    frequents.append(candidateList[i])
-                else:
-                    self.pruned.append(candidateList[i-1])
-        for element in frequents:
-            self.fatherArray.append(element)
-        if len(frequents) == 2 or len(frequents) == 0:
-            # print("This will be returned")
-            return self.fatherArray
-        else:
-            print("frequent ItemsSets:  " + "\n")
-            print(frequents)
-            self.createKCandidates(frequents)
-
-
-
-    def createKCandidates(self, frequents):
-        elementKeys = []
-        combinations = []
-        candidateSet = []
-        for element in range(len(frequents)):
-            if element % 2 == 0:
-                elementKeys.append(frequents[element])
-        for item in elementKeys:
-            temp = []
-            k = elementKeys.index(item)
-            for i in range(k + 1, len(elementKeys)):
-                for j in item:
-                    if j not in temp:
-                        temp.append(j)
-                for m in elementKeys[i]:
-                    if m not in temp:
-                        temp.append(m)
-                combinations.append(temp)
-                temp = []
-        sortedCombinations = []
-        uniqueCombinations = []
-        for i in combinations:
-            sortedCombinations.append(sorted(i))
-        for i in sortedCombinations:
-            if i not in uniqueCombinations:
-                uniqueCombinations.append(i)
-        combinations = uniqueCombinations
-        for tuples in combinations:
-            counter = 0
-            for line in open(self.folder_path, 'r'):
-                items = line.split(" ")
-                if set(tuples).issubset(set(items)):
-                    counter += 1
-                if counter != 0:
-                    candidateSet.append(tuples)
-                    candidateSet.append(counter)
-        print("candidate sets:  " + "\n")
-        print(candidateSet)
-        self.generateFrequentItems(candidateSet)
-
-
-
+    # eliminates all candidates that fall under the support treshold
     def pruneCandidates(self):
-        # eliminates all candidates that fall under the support treshold
+        
         keys_to_prune = list()
         for pair in self.candidates.items():
             if pair[1] < (self.transactions / float(100)) * self.support:
@@ -122,11 +46,9 @@ class FrequentItems:
         return self.candidates
 
 
-
-
-    '''
+    # create a powerset of order k_itemset
     def createPowerSets(self, candidates):
-        # create a powerset of order k_itemset
+
         num = len(candidates)
         powerset = []
         for i in range(1, 1 << num):
@@ -142,11 +64,11 @@ class FrequentItems:
             for line in open(self.folder_path, 'r'):
                 items = line.split(" ")
                 self.createPowerSets(items)
+                
 
 
 
-
-
+'''
     def hasFrequentSubsets(self):
         # check if all subsets of the itemset are also frequent
         subsets = self.createPowerSets()
@@ -187,6 +109,7 @@ class FrequentItems:
         return C
 '''
 
-a = FrequentItems(folder_path=path, support=2, k_itemset=2)
-first_step = a.createCandidates()
-a.generateFrequentItems(first_step)
+a = FrequentItems(folder_path=path, support=1)
+a.createCandidates()
+a.pruneCandidates()
+a.generateAprioriCandidates()

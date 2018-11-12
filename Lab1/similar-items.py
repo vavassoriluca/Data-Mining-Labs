@@ -37,7 +37,9 @@ class SimilarItems:
 
 		intersection = len(list(set(a).intersection(b)))
 		union = (len(a) + len(b)) - intersection
-		return intersection / union
+		if union == 0:
+			return 0.0
+		return intersection / float(union)
 
 	# Get as many pairs of parameters as the number of hash functions
 	def get_hash_coefficients(self):
@@ -92,15 +94,19 @@ class SimilarItems:
 			print(b)
 
 		for band in range(b):
+
+			# Set the limit of the indices
 			i = r*band if r*band <= matrix.shape[0] else matrix.shape[0]
 			j = r*(band+1) if r*(band+1) <= matrix.shape[0] else matrix.shape[0]
 			
 			lsh_dict = defaultdict(list)
 
+			# Hash the band
 			for col in range(matrix.shape[1]):
 				band_hash = binascii.crc32(str.encode("".join(matrix[i:j, col].astype("str"))))  & 0xffffffff
 				lsh_dict[band_hash].append(col)
 
+			# Filter the buckets with more than 1 document and count the occurencies of couples
 			for v in lsh_dict.values():
 
 				if len(v) > 1:
@@ -158,7 +164,7 @@ class SimilarItems:
 def main():
 
 	args = list()
-	args.append("../custom_documents/")
+	args.append("data/")
 	args.append(False)
 	args.append(False)
 	args.append(True)
