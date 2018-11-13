@@ -1,9 +1,7 @@
 import numpy as np
 from collections import defaultdict
 from itertools import combinations
-
-# path to dataset
-path = "../../T10I4D100K.dat"
+import sys
 
 class FrequentItems:
     
@@ -100,9 +98,9 @@ class FrequentItems:
                 intersection = set(pre_combs).intersection(source_set)
                 if len(intersection) > 1:
                     # Implementation of a-priori with small modification, faster
-                    combs = combinations(sorted(self.flatten_tuples(intersection)), k)
+                    #combs = combinations(sorted(self.flatten_tuples(intersection)), k)
                     # Strict implementation of a-priori algorithm, but slower
-                    #combs = self.create_k_itemset(list(intersection))
+                    combs = self.create_k_itemset(list(intersection))
                     for c in combs:
                         k_candidates[c] += 1
             self.candidates.append(self.prune_candidates(k_candidates))
@@ -168,6 +166,24 @@ class AssociationRules:
                             print(string + " : " + str(confidence))
                             self.associations[string] = confidence
 
+def main():
 
-a = FrequentItems(file_path=path, min_support=0.5)
-AssociationRules(a.generate_apriori_candidates(), 90).find_associations()
+    args = list()
+    args.append("../../T10I4D100K.dat") # path to dataset 
+    args.append(1)       # percentage to compute min_support
+    args.append(80)      # precentage to compute confidence for rules
+
+    i = 0
+
+    for arg in sys.argv[1:]:
+        args[i] = arg 
+        i += 1
+        if i > 3:
+            break
+
+    t = FrequentItems(args[0], float(args[1]))
+    AssociationRules(t.generate_apriori_candidates(), float(args[2])).find_associations()
+
+
+if __name__ == "__main__":
+    main()
