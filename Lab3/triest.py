@@ -4,9 +4,8 @@
 # We are to implement the TRIEST-FD (Fully Dynamic)
 
 import random
-import operator
 
-class TriestFD:
+class Triest:
 
 	def __init__(self, stream_path, M=6):
 
@@ -26,8 +25,40 @@ class TriestFD:
 		return True if random.random() < p else False
 
 
+	def sample_edge_base(self, edge):
 
-	def sample_edge(self, edge):
+		if self.t  <= self.M:
+
+			return True
+
+		elif self.flip_biased_coin(self.M / float(self.t)):
+
+				remove = random.sample(self.S, 1)
+				self.S = self.S - set(remove)
+				self.update_counters("-", remove[0], False)
+				self.S.add(edge)
+				return True
+
+		return False
+
+
+	def sample_edge_improved(self, edge):
+
+		if self.t  <= self.M:
+
+			return True
+
+		elif self.flip_biased_coin(self.M / float(self.t)):
+
+				remove = random.sample(self.S, 1)
+				self.S = self.S - set(remove)
+				self.S.add(edge)
+				return True
+
+		return False
+
+
+	def sample_edge_fd(self, edge):
 
 		if self.di + self.do == 0:
 
@@ -39,9 +70,8 @@ class TriestFD:
 
 			elif self.flip_biased_coin(self.M / float(self.t)):
 
-				print("HO SOSTITUITO")
 				remove = random.sample(self.S, 1)
-				self.update_counters("-", remove[0])
+				self.update_counters("-", remove[0], False)
 				self.S = self.S - set(remove)
 				self.S.add(edge)
 				return True
@@ -72,7 +102,7 @@ class TriestFD:
 		return neighbours - set(vertex)
 
 
-	def update_counters(self, sign, edge):
+	def update_counters(self, sign, edge, weighted):
 
 		if len(edge) < 2:
 			print(edge, len(edge), type(edge))
@@ -81,28 +111,62 @@ class TriestFD:
 
 		for e in neighbours_intersection:
 
-			self.tau = self.tau - 1 if sign == '-' else self.tau + 1
+			if weighted:
+				self.tau += max(1, (self.t - 1)*(self.t - 2)/float((self.M * (self.M - 1))))
+			else:
+				self.tau = self.tau - 1 if sign == '-' else self.tau + 1
 
 
-	def start(self):
+	def base(self):
 
 		for line in self.stream.readlines():
 
-			sign = '+' if random.random() < 0.5 else '-'
+			e = ('+', tuple(line.split()))
+
+			self.t += 1
+			if self.sample_edge_base(e[1]):
+
+					self.S.add(e[1])
+					self.update_counters('+', e[1], False)
+
+		print("Final Counter: ", self.tau)
+
+
+	def improved(self):
+
+		for line in self.stream.readlines():
+
+			e = ('+', tuple(line.split()))
+
+			self.t += 1
+			self.update_counters(e[0], e[1], True)
+
+			if self.sample_edge_base(e[1]):
+
+					self.S.add(e[1])
+
+		print("Final Counter: ", self.tau)
+
+
+	def full_dynamic(self):
+
+		for line in self.stream.readlines():
+
+			sign = '+' if random.random() < 0.2 else '-'
 			e = (sign, tuple(line.split()))
 
 			self.t += 1
 			self.s = self.s - 1 if e[0] == '-' else self.s + 1
 			if e[0] == '+': 
 
-				if self.sample_edge(e[1]):
+				if self.sample_edge_fd(e[1]):
 
 					print(self.t)
-					self.update_counters('+', e[1])
+					self.update_counters('+', e[1], False)
 
 			elif e[1] in self.S:
 
-				self.update_counters('-', e[1])
+				self.update_counters('-', e[1], False)
 				self.S - e[1]
 				self.di += 1
 
@@ -110,10 +174,11 @@ class TriestFD:
 
 				self.do += 1
 
-		print("FINISH: ", self.tau)
+		print("Final Counter: ", self.tau)
 
 
-TriestFD("../../edges").start()
+Triest("../../edges", M=20).improved()
+
 
 
 
