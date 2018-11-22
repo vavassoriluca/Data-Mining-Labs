@@ -12,7 +12,7 @@ import sys
 class SimilarItems:
 
 
-	def __init__(self, folder_path, shingle_sim=False, signature_sim=False, lsh_sim=True, k_shingles=5, num_hashes=30, bands=10, treshold=0.3):
+	def __init__(self, folder_path, shingle_sim=False, signature_sim=True, lsh_sim=True, k_shingles=5, num_hashes=30, bands=10, treshold=0.3):
 		
 		self.folder_path = folder_path									# path to the documents folder
 		self.documents = os.listdir(self.folder_path)					# names of documents
@@ -164,14 +164,14 @@ class SimilarItems:
 def main():
 
 	args = list()
-	args.append("data/")
+	args.append("../../custom_documents")
 	args.append(False)
-	args.append(False)
+	args.append(True)
 	args.append(True)
 	args.append(5)
 	args.append(30)
 	args.append(10)
-	args.append(0.3)
+	args.append(0.7)
 
 	i = 0
 
