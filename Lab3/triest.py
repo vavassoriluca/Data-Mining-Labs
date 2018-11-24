@@ -107,18 +107,22 @@ class Triest:
 		if len(edge) < 2:
 			print(edge, len(edge), type(edge))
 
+		#TODO nella versione improved l'intersezione è sempre vuota
 		neighbours_intersection = self.get_neighbours(edge[0]).intersection(self.get_neighbours(edge[1]))
+		#print("intersection has size {}".format(len(neighbours_intersection)))
 
 		for e in neighbours_intersection:
 
 			if weighted:
-				self.tau += max(1, (self.t - 1)*(self.t - 2)/float((self.M * (self.M - 1))))
+				self.tau += max(1, ((self.t - 1)*(self.t - 2))/float((self.M * (self.M - 1))))
+				print("tau after weighted update {}".format(self.tau))
 			else:
 				self.tau = self.tau - 1 if sign == '-' else self.tau + 1
 
 
 	def base(self):
 
+		i = 0
 		for line in self.stream.readlines():
 
 			e = ('+', tuple(line.split()))
@@ -126,7 +130,10 @@ class Triest:
 			self.t += 1
 			if self.sample_edge_base(e[1]):
 
+					print("sampling for the {} time".format(i))
+					i += 1
 					self.S.add(e[1])
+					print("present reservoir set is {}".format(self.S))
 					self.update_counters('+', e[1], False)
 
 		print("Final Counter: ", self.tau)
@@ -134,25 +141,33 @@ class Triest:
 
 	def improved(self):
 
+		i = 0
 		for line in self.stream.readlines():
 
 			e = ('+', tuple(line.split()))
 
 			self.t += 1
+			print("present reservoir set (before updating) is {}".format(self.S))
 			self.update_counters(e[0], e[1], True)
 
-			if self.sample_edge_base(e[1]):
+			if self.sample_edge_improved(e[1]):
 
+					print("sampling for the {} time".format(i))
+					i += 1
 					self.S.add(e[1])
+					print("present reservoir set is {}".format(self.S))
+
 
 		print("Final Counter: ", self.tau)
 
 
 	def full_dynamic(self):
 
+		i = 0
 		for line in self.stream.readlines():
 
-			sign = '+' if random.random() < 0.2 else '-'
+			#TODO da dove hai tirato fuori questa soglia? come la hai calcolata?
+			sign = '+' if random.random() < 0.5 else '-'
 			e = (sign, tuple(line.split()))
 
 			self.t += 1
@@ -161,12 +176,17 @@ class Triest:
 
 				if self.sample_edge_fd(e[1]):
 
+					print("sampling for the {} time".format(i))
+					i += 1
 					print(self.t)
 					self.update_counters('+', e[1], False)
+					print("updating counters first")
 
 			elif e[1] in self.S:
 
 				self.update_counters('-', e[1], False)
+				#TODO non entra mai in questo if
+				print("updating counters second")
 				self.S - e[1]
 				self.di += 1
 
@@ -177,8 +197,7 @@ class Triest:
 		print("Final Counter: ", self.tau)
 
 
-Triest("../../edges", M=20).improved()
-
+Triest("../../SharedData/edges.jpg", M=20).full_dynamic()
 
 
 
