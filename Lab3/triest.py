@@ -112,16 +112,24 @@ class Triest:
 		for e in neighbours_intersection:
 
 			if weighted:
+
 				weight = (self.t - 1)*(self.t - 2)/float((self.M * (self.M - 1)))
 				self.tau += max(1, weight)
 				self.tau_local[e] += max(1, weight)
 				self.tau_local[edge[0]] += max(1, weight)
 				self.tau_local[edge[1]] += max(1, weight)
+
 			else:
 				self.tau = self.tau - 1 if sign == '-' else self.tau + 1
 				self.tau_local[e] = self.tau_local[e] - 1 if sign == '-' else self.tau_local[e] + 1
 				self.tau_local[edge[0]] = self.tau_local[edge[0]] - 1 if sign == '-' else self.tau_local[edge[0]] + 1
 				self.tau_local[edge[1]] = self.tau_local[edge[1]] - 1 if sign == '-' else self.tau_local[edge[1]] + 1
+				if self.tau_local[e] == 0:
+					del self.tau_local[e]
+				if self.tau_local[edge[0]] == 0:
+					del self.tau_local[edge[0]]
+				if self.tau_local[edge[1]] == 0:
+					del self.tau_local[edge[1]]
 
 
 	def base(self):
@@ -140,7 +148,7 @@ class Triest:
 					self.update_counters('+', e[1], False)
 
 		print("Global counter: ", self.tau)
-		#print("Local counters: ", {k:v for k,v in self.tau_local.items() if v > 0})
+		#print("Local counters: ", self.tau_local)
 
 
 	def improved(self):
@@ -151,16 +159,14 @@ class Triest:
 		for line in self.stream.readlines():
 
 			e = ('+', tuple(line.split()))
-
 			self.t += 1
 			self.update_counters('+', e[1], True)
-
 			if self.sample_edge_improved(e[1]):
 
 					self.S.add(e[1])
 
 		print("Global counter: ", self.tau)
-		#print("Local counters: ", {k:v for k,v in self.tau_local.items() if v > 0})
+		#print("Local counters: ", self.tau_local)
 
 
 	def full_dynamic(self):
@@ -171,6 +177,7 @@ class Triest:
 		for line in self.stream.readlines():
 
 			sign = '+' if random.random() < 1 else '-'
+
 			e = (sign, tuple(line.split()))
 
 			self.t += 1
@@ -192,7 +199,7 @@ class Triest:
 				self.do += 1
 
 		print("Global counter: ", self.tau)
-		#print("Local counters: ", {k:v for k,v in self.tau_local.items() if v > 0})
+		#print("Local counters: ", self.tau_local)
 
 
 def main():
@@ -262,7 +269,6 @@ def main():
     	print("\n")
     	t.full_dynamic()
     	print("\n\n")
-
 
 
 if __name__ == "__main__":
