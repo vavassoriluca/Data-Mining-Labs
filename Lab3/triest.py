@@ -17,6 +17,8 @@ class Triest:
 
 	def reset(self):
 
+		print("Resetting the variables: ")
+
 		self.S = set()
 		self.t = 0
 		self.s = 0
@@ -24,6 +26,8 @@ class Triest:
 		self.do = 0
 		self.tau = 0
 		self.tau_local = defaultdict(int)
+
+		print("S: {}, t: {}, tau: {}".format(self.S, self.t, self.tau))
 
 
 	def flip_biased_coin(self, p):
@@ -40,7 +44,7 @@ class Triest:
 		elif self.flip_biased_coin(self.M / float(self.t)):
 
 				remove = self.S.pop()
-				self.S = self.S - set(remove)
+				self.S.remove(remove)
 				self.update_counters("-", remove, False)
 				return True
 
@@ -57,7 +61,7 @@ class Triest:
 
 				#remove = random.sample(self.S, 1)[0]
 				remove = self.S.pop()
-				self.S = self.S - set(remove)
+				self.S.remove(remove)
 				return True
 
 		return False
@@ -76,7 +80,7 @@ class Triest:
 
 				remove = self.S.pop()
 				self.update_counters("-", remove, False)
-				self.S = self.S - set(remove)
+				self.S.remove(remove)
 				self.S.add(edge)
 				return True
 
@@ -92,53 +96,47 @@ class Triest:
 			return False
 
 
-	def get_neighbours(self, vertex):
+	def get_neighbours(self, edge):
 
-		neighbours = set()
+		neighbours_u = set()
+		neighbours_v = set()
 
 		for t in self.S:
 
-			if vertex in t:
+			if t[0] == edge[0]:
+				neighbours_u.add(t[1])
+			if t[1] == edge[0]:
+				neighbours_u.add(t[0])
+			if t[0] == edge[1]:
+				neighbours_v.add(t[1])
+			if t[1] == edge[1]:
+				neighbours_v.add(t[0])
 
-				neighbours.add(t[0])
-				neighbours.add(t[1])
-
-		return neighbours - {vertex}
+		return neighbours_u, neighbours_v
 
 
 	def update_counters(self, sign, edge, weighted):
 
-		neighbours_u = self.get_neighbours(edge[0])
-		neighbours_v = self.get_neighbours(edge[1])
-		neighbours_intersection = neighbours_u.intersection(neighbours_v)
+		neighbours_u, neighbours_v = self.get_neighbours(edge)
+		neighbours_intersection = neighbours_u & neighbours_v
 
-		#if sign == '-':
-			#print("-")
-			#print(edge)
-			#print(len(neighbours_intersection))
-			#input()
-
-		#if self.t > self.M and sign == '+':
-			#print(edge)
-			#print("+")
-			#print(len(neighbours_intersection))
-			#input()
+		if weighted:
+			weight = (self.t - 1)*(self.t - 2)/float((self.M * (self.M - 1)))
 
 		for e in neighbours_intersection:
 
 			if weighted:
 
-				weight = (self.t - 1)*(self.t - 2)/float((self.M * (self.M - 1)))
-				self.tau += max(1, weight)
-				self.tau_local[e] += max(1, weight)
-				self.tau_local[edge[0]] += max(1, weight)
-				self.tau_local[edge[1]] += max(1, weight)
+				if weight < 1:
+					weight = 1
+				self.tau += weight
+				self.tau_local[e] += weight
+				self.tau_local[edge[0]] += weight
+				self.tau_local[edge[1]] += weight
 
 			else:
 
-				#print(self.tau)
 				self.tau = self.tau - 1 if sign == '-' else self.tau + 1
-				#print(self.tau)
 				self.tau_local[e] = self.tau_local[e] - 1 if sign == '-' else self.tau_local[e] + 1
 				self.tau_local[edge[0]] = self.tau_local[edge[0]] - 1 if sign == '-' else self.tau_local[edge[0]] + 1
 				self.tau_local[edge[1]] = self.tau_local[edge[1]] - 1 if sign == '-' else self.tau_local[edge[1]] + 1
@@ -159,7 +157,8 @@ class Triest:
 		for line in self.stream.readlines():
 
 			line = line.split()
-			e = ('+', (int(line[0]), int(line[1])))
+			line = sorted([int(line[0]), int(line[1])])
+			e = ('+', tuple(line))
 
 			self.t += 1
 			if self.sample_edge_base(e[1]):
@@ -180,7 +179,9 @@ class Triest:
 
 		for line in self.stream.readlines():
 
-			e = ('+', tuple(line.split()))
+			line = line.split()
+			line = sorted([int(line[0]), int(line[1])])
+			e = ('+', tuple(line))
 			self.t += 1
 			self.update_counters('+', e[1], True)
 			if self.sample_edge_improved(e[1]):
@@ -202,7 +203,9 @@ class Triest:
 
 			sign = '+' if random.random() < 1 else '-'
 
-			e = (sign, tuple(line.split()))
+			line = line.split()
+			line = sorted([int(line[0]), int(line[1])])
+			e = (sign, tuple(line))
 
 			self.t += 1
 			self.s = self.s - 1 if e[0] == '-' else self.s + 1
@@ -226,7 +229,6 @@ class Triest:
 
 		print("Global counter: ", self.tau*epsilon)
 		#print("Local counters: ", self.tau_local)
-
 
 def main():
 
