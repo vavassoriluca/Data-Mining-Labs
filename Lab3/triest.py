@@ -39,7 +39,7 @@ class Triest:
 
 		elif self.flip_biased_coin(self.M / float(self.t)):
 
-				remove = random.sample(self.S, 1)[0]
+				remove = self.S.pop()
 				self.S = self.S - set(remove)
 				self.update_counters("-", remove, False)
 				return True
@@ -55,7 +55,8 @@ class Triest:
 
 		elif self.flip_biased_coin(self.M / float(self.t)):
 
-				remove = random.sample(self.S, 1)[0]
+				#remove = random.sample(self.S, 1)[0]
+				remove = self.S.pop()
 				self.S = self.S - set(remove)
 				return True
 
@@ -73,7 +74,7 @@ class Triest:
 
 			elif self.flip_biased_coin(self.M / float(self.t)):
 
-				remove = random.sample(self.S, 1)[0]
+				remove = self.S.pop()
 				self.update_counters("-", remove, False)
 				self.S = self.S - set(remove)
 				self.S.add(edge)
@@ -102,12 +103,26 @@ class Triest:
 				neighbours.add(t[0])
 				neighbours.add(t[1])
 
-		return neighbours - set(vertex)
+		return neighbours - {vertex}
 
 
 	def update_counters(self, sign, edge, weighted):
 
-		neighbours_intersection = self.get_neighbours(edge[0]) & self.get_neighbours(edge[1])
+		neighbours_u = self.get_neighbours(edge[0])
+		neighbours_v = self.get_neighbours(edge[1])
+		neighbours_intersection = neighbours_u.intersection(neighbours_v)
+
+		#if sign == '-':
+			#print("-")
+			#print(edge)
+			#print(len(neighbours_intersection))
+			#input()
+
+		#if self.t > self.M and sign == '+':
+			#print(edge)
+			#print("+")
+			#print(len(neighbours_intersection))
+			#input()
 
 		for e in neighbours_intersection:
 
@@ -120,16 +135,20 @@ class Triest:
 				self.tau_local[edge[1]] += max(1, weight)
 
 			else:
+
+				#print(self.tau)
 				self.tau = self.tau - 1 if sign == '-' else self.tau + 1
+				#print(self.tau)
 				self.tau_local[e] = self.tau_local[e] - 1 if sign == '-' else self.tau_local[e] + 1
 				self.tau_local[edge[0]] = self.tau_local[edge[0]] - 1 if sign == '-' else self.tau_local[edge[0]] + 1
 				self.tau_local[edge[1]] = self.tau_local[edge[1]] - 1 if sign == '-' else self.tau_local[edge[1]] + 1
-				if self.tau_local[e] == 0:
-					del self.tau_local[e]
-				if self.tau_local[edge[0]] == 0:
-					del self.tau_local[edge[0]]
-				if self.tau_local[edge[1]] == 0:
-					del self.tau_local[edge[1]]
+
+			if self.tau_local[e] == 0:
+				del self.tau_local[e]
+			if self.tau_local[edge[0]] == 0:
+				del self.tau_local[edge[0]]
+			if self.tau_local[edge[1]] == 0:
+				del self.tau_local[edge[1]]
 
 
 	def base(self):
@@ -139,7 +158,8 @@ class Triest:
 
 		for line in self.stream.readlines():
 
-			e = ('+', tuple(line.split()))
+			line = line.split()
+			e = ('+', (int(line[0]), int(line[1])))
 
 			self.t += 1
 			if self.sample_edge_base(e[1]):
@@ -147,7 +167,9 @@ class Triest:
 					self.S.add(e[1])
 					self.update_counters('+', e[1], False)
 
-		print("Global counter: ", self.tau)
+		epsilon = max(1, (self.t*(self.t-1)*(self.t-2))/(self.M*(self.M-1)*(self.M-2)))
+
+		print("Global counter: ", self.tau*epsilon)
 		#print("Local counters: ", self.tau_local)
 
 
@@ -165,7 +187,9 @@ class Triest:
 
 					self.S.add(e[1])
 
-		print("Global counter: ", self.tau)
+		epsilon = max(1, (self.t*(self.t-1)*(self.t-2))/(self.M*(self.M-1)*(self.M-2)))
+
+		print("Global counter: ", self.tau*epsilon)
 		#print("Local counters: ", self.tau_local)
 
 
@@ -198,7 +222,9 @@ class Triest:
 
 				self.do += 1
 
-		print("Global counter: ", self.tau)
+		epsilon = max(1, (self.t*(self.t-1)*(self.t-2))/(self.M*(self.M-1)*(self.M-2)))
+
+		print("Global counter: ", self.tau*epsilon)
 		#print("Local counters: ", self.tau_local)
 
 
