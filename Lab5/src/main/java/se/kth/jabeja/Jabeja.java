@@ -57,6 +57,10 @@ public class Jabeja {
       T = 1;
   }
 
+  private double acceptanceProbability(double c_new, double c_old) {
+    return Math.pow(Math.E, (c_new - c_old) / T);
+  }
+
   /**
    * Sample and swap algorith at node p
    * @param nodeId
@@ -102,11 +106,9 @@ public class Jabeja {
       int dpp = getDegree(nodep, nodep.getColor());
       int dqq = getDegree(nodeq, nodeq.getColor());
       double old = Math.pow(dpp, config.getAlpha()) + Math.pow(dqq, config.getAlpha());
-      //double old = dpp + dqq;
       int dpq = getDegree(nodep, nodeq.getColor());
       int dqp = getDegree(nodeq, nodep.getColor());
       double n3w = Math.pow(dpq, config.getAlpha()) + Math.pow(dqp, config.getAlpha());
-      //double n3w = dpq + dqp;
       if (n3w * this.T > old && n3w > highestBenefit) {
         bestPartner = nodeq;
         highestBenefit = n3w;
