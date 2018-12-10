@@ -19,7 +19,10 @@ public class Jabeja {
   private int numberOfSwaps;
   private int round;
   private float T;
+  private float alpha;
+  private float delta;
   private boolean resultFileCreated = false;
+  private Random random = new Random();
 
   //-------------------------------------------------------------------
   public Jabeja(HashMap<Integer, Node> graph, Config config) {
@@ -28,7 +31,12 @@ public class Jabeja {
     this.round = 0;
     this.numberOfSwaps = 0;
     this.config = config;
-    this.T = config.getTemperature();
+    //this.T = config.getTemperature();
+    this.T = (float)1.5;
+    //this.alpha = config.getAlpha();
+    this.alpha = (float)2.0;
+    //this.delta = config.getDelta();
+    this.delta = (float)0.003;
   }
 
 
@@ -36,6 +44,8 @@ public class Jabeja {
   public void startJabeja() throws IOException {
     for (round = 0; round < config.getRounds(); round++) {
       for (int id : entireGraph.keySet()) {
+        //if (round % 400 == 0)
+          //T = 1;
         sampleAndSwap(id);
       }
 
@@ -51,8 +61,14 @@ public class Jabeja {
    */
   private void saCoolDown(){
     // TODO for second task
+    /*if (T > 1)
+      T  = 1;
+    T *= 0.9;
+    if (T < 0.00001)
+      T = (float)0.00001;
+    */
     if (T > 1)
-      T -= config.getDelta();
+      T -= delta;
     if (T < 1)
       T = 1;
   }
@@ -97,7 +113,9 @@ public class Jabeja {
     Node nodep = entireGraph.get(nodeId);
 
     Node bestPartner = null;
+    Node bestSAPartner = null;
     double highestBenefit = 0;
+    double highestSABenefit = 0;
 
     for (Integer q : nodes) {
       Node nodeq = entireGraph.get(q);
@@ -105,17 +123,20 @@ public class Jabeja {
         continue;
       int dpp = getDegree(nodep, nodep.getColor());
       int dqq = getDegree(nodeq, nodeq.getColor());
-      double old = Math.pow(dpp, config.getAlpha()) + Math.pow(dqq, config.getAlpha());
+      double old = Math.pow(dpp, alpha) + Math.pow(dqq, alpha);
       int dpq = getDegree(nodep, nodeq.getColor());
       int dqp = getDegree(nodeq, nodep.getColor());
-      double n3w = Math.pow(dpq, config.getAlpha()) + Math.pow(dqp, config.getAlpha());
+      double n3w = Math.pow(dpq, alpha) + Math.pow(dqp, alpha);
       if (n3w * this.T > old && n3w > highestBenefit) {
         bestPartner = nodeq;
         highestBenefit = n3w;
-      }
+      } /*else if (acceptanceProbability(n3w, old) > random.nextDouble() && n3w > highestSABenefit){
+        bestSAPartner = nodeq;
+        highestSABenefit = n3w;
+      }*/
     }
 
-    return bestPartner;
+    return (bestPartner != null) ? bestPartner : bestSAPartner;
   }
 
   /**
